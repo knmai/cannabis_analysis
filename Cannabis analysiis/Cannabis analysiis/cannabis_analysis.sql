@@ -15,6 +15,7 @@ GROUP BY type;
 
 SELECT * 
 FROM average_strain_type_rating
+
 /* Testing creating tables through loops. (Not doable unless using dynamic SQL)
 DECLARE @counter INT
 SET @counter =0
@@ -70,10 +71,10 @@ ORDER BY effects_1 ASC
 
 /*SELECT effects_1, effects2.effects_2, effects3.effects_3, effects4.effects_4, effects5.effects_5
 FROM effects1
-LEFT JOIN effects2 ON effects2.effects_2 = effects_1
-LEFT JOIN effects3 ON effects3.effects_3 = effects_1
-LEFT JOIN effects4 ON effects4.effects_4 = effects_1
-LEFT JOIN effects5 ON effects5.effects_5 = effects_1
+	LEFT JOIN effects2 ON effects2.effects_2 = effects_1
+	LEFT JOIN effects3 ON effects3.effects_3 = effects_1
+	LEFT JOIN effects4 ON effects4.effects_4 = effects_1
+	LEFT JOIN effects5 ON effects5.effects_5 = effects_1
 */
 
 --Adding unique effects to 1 column
@@ -89,57 +90,57 @@ SELECT DISTINCT effects_1 AS effects_list
 FROM all_effects 
 
 SELECT *
-FROM all_effects
+FROM master_effects
 */
 
 --Creating master effects list more efficiently
-SELECT effects_1 AS unique_effects
-INTO all_effects_accounted
+SELECT flavor_1 AS unique_flavors
+INTO all_flavors_accounted
 FROM dbo.strain_rating_effects_flavors
+
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_2
+FROM dbo.strain_rating_effects_flavors
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_3
+FROM dbo.strain_rating_effects_flavors
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_4
+FROM dbo.strain_rating_effects_flavors
+
+
+SELECT DISTINCT ISNULL(unique_flavors, 'Empty') AS unique_flavors
+INTO master_flavors_list
+FROM all_flavors_accounted
+
 
 SELECT *
-FROM all_effects_accounted
-
-INSERT INTO all_effects_accounted
-SELECT effects_2
-FROM dbo.strain_rating_effects_flavors
-
-INSERT INTO all_effects_accounted
-SELECT effects_3
-FROM dbo.strain_rating_effects_flavors
-
-INSERT INTO all_effects_accounted
-SELECT effects_4
-FROM dbo.strain_rating_effects_flavors
-
-INSERT INTO all_effects_accounted
-SELECT effects_5
-FROM dbo.strain_rating_effects_flavors
-
-SELECT DISTINCT *
-INTO master_effects_list
-FROM all_effects_accounted
-WHERE unique_effects IS NOT NULL
-
-SELECT *
-FROM master_effects_list
+FROM master_flavors_list
 
 --Count how many strains fall under each effect -to review
-	SELECT strain, (SELECT * FROM master_effects_list) AS effects_list, AVG(rating)
-	FROM dbo.strain_rating_effects_flavors, master_effects_list
-	WHERE effects_1 IN (unique_effects)
-	GROUP BY strain
 
-WITH master_effects_list (unique_effects) AS
-	(SELECT DISTINCT effects_1 FROM all_effects)
-	SELECT unique_effects AS all_effects/*, COUNT(strain) AS number_of_strains*/, COUNT(CASE WHEN effects_1 IN (SELECT DISTINCT effects_1
-FROM all_effects) then 1 else null),  AVG(rating) AS average_associated_rating
-	FROM dbo.strain_rating_effects_flavors, master_effects
-	WHERE effects_list IS NOT NULL
-	GROUP BY effects_list
+
+WITH list_of_flavors (all_flavors) AS
+	(SELECT * FROM master_flavors_list)
+	SELECT all_flavors, COUNT(strain) as number_of_strains_found_in
+	FROM strain_rating_effects_flavors, list_of_flavors
+	WHERE all_flavors IN
+		  (SELECT flavor_1
+		   FROM strain_rating_effects_flavors) 
+	GROUP BY all_flavors
+
 
 SELECT * 
-FROM master_effects_list
+FROM strain_rating_effects_flavors
+
+SELECT unique_flavors , 
+	   COUNT(*)
+FROM master_flavors_list 
+	INNER JOIN strain_rating_effects_flavors as mfl ON unique_flavors = mfl.flavor_1
+GROUP BY unique_flavors
 
 
 /*Tables created for analysis and visualizing: average_strain_type_rating
@@ -240,7 +241,7 @@ SELECT name,
 FROM     dbo.strain_medical_benefits_leafly
 */
 
---Counting the total mumber of benefits and negatives per strains and the thc level
+--Counting the total mumber of benefits and negatives per strain, the thc level and the most commonn terpene
 SELECT 
 		name,
 		thc_level,
@@ -252,7 +253,7 @@ SELECT
 		(talkative),(tingly)) as positives(col)
         where positives.col > 0) as number_of_positive_effects, 
 		(SELECT count(*)
-        FROM (VALUES (anxious), (dizzy), (energetic), 
+        FROM (VALUES =(anxious), (dizzy), (energetic), 
 		(dry_eyes),(dry_mouth),(headache),
 		(paranoid)) as negatives(col)
         where negatives.col > 0) as number_of_negatives_effects, 
@@ -276,6 +277,7 @@ from dbo.strain_medical_benefits_leafly
 
 SELECT *
 FROM list_of_strains_with_number_of_effects
+
 
 SELECT  name as strain,
 		ISNULL(most_common_terpene,'none') AS most_common_terpene, 
@@ -302,8 +304,8 @@ FROM list_of_strains_with_number_of_effects
 WHERE thc_level IS NOT NULL 
 GROUP BY most_common_terpene
 
-
 SELECT *
 FROM terpene_average_thc_and_accounted_effects
 
+--Average of effects grouped by strain types
 
