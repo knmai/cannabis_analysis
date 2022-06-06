@@ -93,7 +93,7 @@ SELECT *
 FROM master_effects
 */
 
---Creating master effects list more efficiently
+--Creating master flavor list 
 SELECT flavor_1 AS unique_flavors
 INTO all_flavors_accounted
 FROM dbo.strain_rating_effects_flavors
@@ -116,14 +116,11 @@ SELECT DISTINCT ISNULL(unique_flavors, 'Empty') AS unique_flavors
 INTO master_flavors_list
 FROM all_flavors_accounted
 
-
 SELECT *
 FROM master_flavors_list
 
---Count how many strains fall under each effect -to review
 
-
-WITH list_of_flavors (all_flavors) AS
+/*WITH list_of_flavors (all_flavors) AS
 	(SELECT * FROM master_flavors_list)
 	SELECT all_flavors, COUNT(strain) as number_of_strains_found_in
 	FROM strain_rating_effects_flavors, list_of_flavors
@@ -131,16 +128,53 @@ WITH list_of_flavors (all_flavors) AS
 		  (SELECT flavor_1
 		   FROM strain_rating_effects_flavors) 
 	GROUP BY all_flavors
-
-
-SELECT * 
-FROM strain_rating_effects_flavors
-
-SELECT unique_flavors , 
-	   COUNT(*)
+	*/
+	
+--Creating table strain count by flavor
+SELECT unique_flavors, 
+	   COUNT(*) AS strain_count
+INTO count_strains_by_flavor
 FROM master_flavors_list 
 	INNER JOIN strain_rating_effects_flavors as mfl ON unique_flavors = mfl.flavor_1
+	FULL OUTER JOIN strain_rating_effects_flavors as mfl2 ON mfl2.flavor_1 = mfl2.flavor_2
+	FULL OUTER JOIN strain_rating_effects_flavors as mfl3 ON mfl3.flavor_1 = mfl3.flavor_2
+	FULL OUTER JOIN strain_rating_effects_flavors as mfl4 ON mfl4.flavor_1 = mfl4.flavor_2
+WHERE unique_flavors iS NOT NULL
 GROUP BY unique_flavors
+
+SELECT SUM(strain_count)
+FROM count_strains_by_flavor
+
+--Checking how many strains have no flavors reported
+SELECT * 
+FROM strain_rating_effects_flavors
+WHERE flavor_1 IS NULL AND
+	  flavor_2 IS NULL AND
+	  flavor_3 IS NULL AND
+	  flavor_4 IS NULL
+
+--Creating master effect list more efficiently
+SELECT flavor_1 AS unique_flavors
+INTO all_flavors_accounted
+FROM dbo.strain_rating_effects_flavors
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_2
+FROM dbo.strain_rating_effects_flavors
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_3
+FROM dbo.strain_rating_effects_flavors
+
+INSERT INTO all_flavors_accounted
+SELECT flavor_4
+FROM dbo.strain_rating_effects_flavors
+
+
+SELECT DISTINCT ISNULL(unique_flavors, 'Empty') AS unique_flavors
+INTO master_flavors_list
+FROM all_flavors_accounted
+
 
 
 /*Tables created for analysis and visualizing: average_strain_type_rating
