@@ -8,10 +8,11 @@ SELECT *
 FROM dbo.strain_rating_effects_flavors;
 
 --Finding average ratings by strain type
-SELECT  type, AVG(rating) AS Average_rating  
+SELECT  type, AVG(rating) AS Average_rating , COUNT(strain) as num_of_strains
 INTO average_strain_type_rating
 FROM dbo.strain_rating_effects_flavors
-GROUP BY type;
+WHERE rating != 0
+GROUP BY type
 
 SELECT * 
 FROM average_strain_type_rating
@@ -117,21 +118,10 @@ INTO master_flavors_list
 FROM all_flavors_accounted
 
 SELECT *
-FROM master_flavors_list
+FROM master_flavors_list 
 
-
-/*WITH list_of_flavors (all_flavors) AS
-	(SELECT * FROM master_flavors_list)
-	SELECT all_flavors, COUNT(strain) as number_of_strains_found_in
-	FROM strain_rating_effects_flavors, list_of_flavors
-	WHERE all_flavors IN
-		  (SELECT flavor_1
-		   FROM strain_rating_effects_flavors) 
-	GROUP BY all_flavors
-	*/
-	
 --Creating table strain count by flavor
-SELECT unique_flavors, 
+/*SELECT unique_flavors, 
 	   COUNT(*) AS strain_count
 INTO count_strains_by_flavor
 FROM master_flavors_list 
@@ -142,8 +132,29 @@ FROM master_flavors_list
 WHERE unique_flavors iS NOT NULL
 GROUP BY unique_flavors
 
-SELECT SUM(strain_count)
-FROM count_strains_by_flavor
+SELECT *
+FROM count_strains_by_flavor*/
+
+--Count flavor by strain and strain type
+WITH list_of_flavors (all_flavors) AS
+(SELECT *
+FROM master_flavors_list)
+SELECT lf.all_flavors, 
+	   COUNT(strain) as number_of_strains_found_in, 
+	   COUNT(CASE WHEN lef.type = 'hybrid' THEN 1
+			 ELSE NULL
+			 END) AS type_hybrid, 
+	   COUNT(CASE WHEN lef.type = 'sativa' THEN 1
+			 ELSE NULL
+			 END) AS type_sativa, 
+	   COUNT(CASE WHEN lef.type = 'indica' THEN 1
+			 ELSE NULL
+			 END) AS type_indica
+FROM strain_rating_effects_flavors AS lef, list_of_flavors as lf
+WHERE lef.flavor_1 = lf.all_flavors
+GROUP BY lf.all_flavors
+ORDER BY lf.all_flavors
+
 
 --Checking how many strains have no flavors reported
 SELECT * 
@@ -154,26 +165,61 @@ WHERE flavor_1 IS NULL AND
 	  flavor_4 IS NULL
 
 --Creating master effect list more efficiently
-SELECT flavor_1 AS unique_flavors
-INTO all_flavors_accounted
+SELECT effects_1 AS unique_effects
+INTO all_effects_accounted
 FROM dbo.strain_rating_effects_flavors
 
-INSERT INTO all_flavors_accounted
-SELECT flavor_2
+INSERT INTO all_effects_accounted
+SELECT effects_2
 FROM dbo.strain_rating_effects_flavors
 
-INSERT INTO all_flavors_accounted
-SELECT flavor_3
+INSERT INTO all_effects_accounted
+SELECT effects_3
 FROM dbo.strain_rating_effects_flavors
 
-INSERT INTO all_flavors_accounted
-SELECT flavor_4
+INSERT INTO all_effects_accounted
+SELECT effects_4
 FROM dbo.strain_rating_effects_flavors
 
+INSERT INTO all_effects_accounted
+SELECT effects_5
+FROM dbo.strain_rating_effects_flavors
 
-SELECT DISTINCT ISNULL(unique_flavors, 'Empty') AS unique_flavors
-INTO master_flavors_list
-FROM all_flavors_accounted
+SELECT DISTINCT ISNULL(unique_effects, 'Empty') AS unique_effects
+INTO master_effects_list
+FROM all_effects_accounted
+
+SELECT *
+FROM master_effects_list
+
+/*SELECT DISTINCT m.effects_1, COUNT(strain) as number_of_strains_found_in
+FROM strain_rating_effects_flavors AS m
+WHERE EXISTS (SELECT *
+			  FROM master_effects_list AS e 
+			  WHERE m.effects_1 = e.unique_effects
+			  GROUP BY unique_effects)
+GROUP BY m.effects_1
+ORDER BY m.effects_1*/
+
+--Count effeccts by strain and strain type
+WITH list_of_effects (all_effects) AS
+(SELECT *
+FROM master_effects_list)
+SELECT le.all_effects, 
+	   COUNT(strain) as number_of_strains_found_in, 
+	   COUNT(CASE WHEN lef.type = 'hybrid' THEN 1
+			 ELSE NULL
+			 END) AS type_hybrid, 
+	   COUNT(CASE WHEN lef.type = 'sativa' THEN 1
+			 ELSE NULL
+			 END) AS type_sativa, 
+	   COUNT(CASE WHEN lef.type = 'indica' THEN 1
+			 ELSE NULL
+			 END) AS type_indica
+FROM strain_rating_effects_flavors AS lef, list_of_effects as le
+WHERE lef.effects_1 = le.all_effects
+GROUP BY le.all_effects
+ORDER BY le.all_effects
 
 
 
@@ -231,7 +277,7 @@ FROM temp_master_strain_list
 
 /*To be used later on
 --Creating table of effects and benefits
-CREATE TABLE 
+CREATE TABLE  
 	leafly_effects_list (positive_effects VARCHAR(50), negative_effect VARCHAR(50), ambiguous_effects VARCHAR(50), helps_with VARCHAR(50))
 INSERT INTO leafly_effects_list(positive_effects)
 VALUES ('relaxed'),('happy'), ('euphoric'),( 'uplifted'), 
