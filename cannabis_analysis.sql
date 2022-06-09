@@ -149,11 +149,12 @@ SELECT lf.all_flavors,
 			 END) AS type_sativa, 
 	   COUNT(CASE WHEN lef.type = 'indica' THEN 1
 			 ELSE NULL
-			 END) AS type_indica
+			 END) AS type_indica,
+	   AVG(rating) AS avg_rating
 FROM strain_rating_effects_flavors AS lef, list_of_flavors as lf
 WHERE lef.flavor_1 = lf.all_flavors
 GROUP BY lf.all_flavors
-ORDER BY lf.all_flavors
+ORDER BY avg_rating
 
 
 --Checking how many strains have no flavors reported
@@ -215,7 +216,8 @@ SELECT le.all_effects,
 			 END) AS type_sativa, 
 	   COUNT(CASE WHEN lef.type = 'indica' THEN 1
 			 ELSE NULL
-			 END) AS type_indica
+			 END) AS type_indica,
+	   AVG(rating) AS avg_rating
 FROM strain_rating_effects_flavors AS lef, list_of_effects as le
 WHERE lef.effects_1 = le.all_effects
 GROUP BY le.all_effects
@@ -387,5 +389,29 @@ GROUP BY most_common_terpene
 SELECT *
 FROM terpene_average_thc_and_accounted_effects
 
---Average of effects grouped by strain types
+SELECT *
+FROM dbo.strain_medical_benefits_leafly
 
+
+--Average of effects grouped by strain types
+SELECT 
+
+
+/*Analyzing strainstrain_thc_cbd_max_ranking_wa table*/
+CREATE INDEX sprrr ON strain_thc_cbd_org_name_ranking_product_type_wa (leafly_strain, strain_leafly_page_rank, strain_leafly_review_rank)
+
+SELECT leafly_strain, strain_leafly_page_rank,strain_leafly_review_rank
+FROM strain_thc_cbd_org_name_ranking_product_type_wa
+GROUP BY leafly_strain, strain_leafly_page_rank, strain_leafly_review_rank
+
+CREATE INDEX sprrr ON strain_thc_cbd_org_name_ranking_product_type_wa (leafly_strain, strain_leafly_page_rank, strain_leafly_review_rank)
+
+SELECT DISTINCT sr.leafly_strain, sr.strain_leafly_page_rank, sr.strain_leafly_review_rank
+FROM strain_thc_cbd_org_name_ranking_product_type_wa AS sr
+ORDER BY leafly_strain
+
+CREATE INDEX idx ON strain_thc_cbd_org_name_ranking_product_type_wa (leafly_strain, strain_leafly_page_rank, strain_leafly_review_rank);
+SELECT DISTINCT leafly_strain, strain_leafly_page_rank, strain_leafly_review_rank
+FROM strain_thc_cbd_org_name_ranking_product_type_wa
+GROUP BY leafly_strain , strain_leafly_page_rank, strain_leafly_review_rank
+ORDER BY strain_leafly_review_rank
