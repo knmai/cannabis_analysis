@@ -3,6 +3,7 @@
 --Opening the database
 USE cannabis_analysis
 
+
 --Viewing table
 SELECT * 
 FROM dbo.strain_rating_effects_flavors;
