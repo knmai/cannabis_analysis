@@ -3,7 +3,6 @@
 --Opening the database
 USE cannabis_analysis
 
-
 --Viewing table
 SELECT * 
 FROM dbo.strain_rating_effects_flavors;
@@ -100,44 +99,23 @@ FROM master_effects
 --//////////////// Turn this process into a stored procedure///////////////////////////
 --/////////////////////////////////////////////////////////////////////////////////////
 SELECT flavor_1 AS unique_flavors
-INTO all_flavors_accounted
+INTO master_flavors_list
 FROM dbo.strain_rating_effects_flavors
-
-
-INSERT INTO all_flavors_accounted
+UNION
 SELECT flavor_2
 FROM dbo.strain_rating_effects_flavors
-
-INSERT INTO all_flavors_accounted
+UNION
 SELECT flavor_3
 FROM dbo.strain_rating_effects_flavors
-
-INSERT INTO all_flavors_accounted
+UNION
 SELECT flavor_4
 FROM dbo.strain_rating_effects_flavors
 
-
-SELECT DISTINCT ISNULL(unique_flavors, 'Empty') AS unique_flavors
-INTO master_flavors_list
-FROM all_flavors_accounted
-
 SELECT *
-FROM master_flavors_list 
+FROM master_flavors_list
 
---Creating table strain count by flavor
-/*SELECT unique_flavors, 
-	   COUNT(*) AS strain_count
-INTO count_strains_by_flavor
-FROM master_flavors_list 
-	INNER JOIN strain_rating_effects_flavors as mfl ON unique_flavors = mfl.flavor_1
-	FULL OUTER JOIN strain_rating_effects_flavors as mfl2 ON mfl2.flavor_1 = mfl2.flavor_2
-	FULL OUTER JOIN strain_rating_effects_flavors as mfl3 ON mfl3.flavor_1 = mfl3.flavor_2
-	FULL OUTER JOIN strain_rating_effects_flavors as mfl4 ON mfl4.flavor_1 = mfl4.flavor_2
-WHERE unique_flavors iS NOT NULL
-GROUP BY unique_flavors
 
-SELECT *
-FROM count_strains_by_flavor*/
+
 
 --Count flavor by strain and strain type
 WITH list_of_flavors (all_flavors) AS
@@ -159,7 +137,7 @@ FROM strain_rating_effects_flavors AS lef, list_of_flavors as lf
 WHERE lef.flavor_1 = lf.all_flavors
 GROUP BY lf.all_flavors
 ORDER BY avg_rating
-
+ 
 
 --Checking how many strains have no flavors reported
 SELECT * 
@@ -236,6 +214,9 @@ ORDER BY le.all_effects
 /*Analyzing strain medical benefits*/
 
 --Average THC content by strain type
+SELECT *
+FROM strain_medical_benefits_leafly
+
 SELECT type, AVG(thc_level) AS Average_THC
 INTO average_thc_by_type
 FROM dbo.strain_medical_benefits_leafly
@@ -419,3 +400,6 @@ SELECT DISTINCT leafly_strain, strain_leafly_page_rank, strain_leafly_review_ran
 FROM strain_thc_cbd_org_name_ranking_product_type_wa
 GROUP BY leafly_strain , strain_leafly_page_rank, strain_leafly_review_rank
 ORDER BY strain_leafly_review_rank
+
+SELECT *
+FROM strain_thc_cbd_org_name_ranking_product_type_wa
